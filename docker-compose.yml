@@ -20,6 +20,7 @@ services:
   # Not started by "docker compose up" (restricted to the "build" profile).
   base:
     image: ${LEILFS_REGISTRY:+${LEILFS_REGISTRY}/}leilfs-base:${LEILFS_IMAGE_TAG:-latest}
+    profiles: ["build"]
     build:
       context: ./leilfs-base
       args:
