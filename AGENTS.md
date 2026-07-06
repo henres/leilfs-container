@@ -51,7 +51,7 @@ started by `docker compose up`.
 docker compose --profile build build
 
 # Pin a specific LeilFS APT package version
-SAUNAFS_VERSION=5.9.0 docker compose --profile build build
+SAUNAFS_VERSION=5.10.1 docker compose --profile build build
 
 # Build into a custom registry namespace
 LEILFS_REGISTRY=ghcr.io/myorg/leilfs-container \
