@@ -1,0 +1,26 @@
+ARG BASE_IMAGE=ubuntu:24.04
+FROM $BASE_IMAGE
+
+# SAUNAFS_VERSION: pin a specific version (e.g. "3.14.0") or leave empty for latest
+ARG SAUNAFS_VERSION=""
+LABEL maintainer="contact@saunafs.com" \
+      org.opencontainers.image.source="https://github.com/leil-io/leilfs-container"
+
+# Install required packages
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends gnupg wget dirmngr util-linux dialog ca-certificates && \
+	yes | unminimize && \
+	apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Ensure gnupg home exists before importing key
+RUN mkdir -p /root/.gnupg
+
+# Update CA certificates before running gpg
+RUN update-ca-certificates && \
+	gpg --no-default-keyring \
+	--keyring /usr/share/keyrings/saunafs-archive-keyring.gpg \
+	--keyserver hkps://keyserver.ubuntu.com \
+	--receive-keys 0xA80B96E2C79457D4
+
+# Add LeilFS APT repository (public access path); install per-child image as needed
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/saunafs-archive-keyring.gpg] https://repo.saunafs.com/repository/saunafs-ubuntu-24.04/ noble main" > /etc/apt/sources.list.d/saunafs.list

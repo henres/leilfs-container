@@ -31,6 +31,22 @@ This project was created for making fast DEMOs and playground purpose.
 
 **It should NOT be used for production data!**
 
+## Pre-built images (GitHub Packages)
+
+Images are automatically built and published to the GitHub Container Registry on every push to `main`
+and on every version tag (`v*.*.*`):
+
+```
+ghcr.io/leil-io/leilfs-container/leilfs-base
+ghcr.io/leil-io/leilfs-container/leilfs-master
+ghcr.io/leil-io/leilfs-container/leilfs-metalogger
+ghcr.io/leil-io/leilfs-container/leilfs-chunkserver
+ghcr.io/leil-io/leilfs-container/leilfs-cgiserver
+ghcr.io/leil-io/leilfs-container/leilfs-client
+```
+
+Available tags: tag follow git repository tags
+
 ## Requirements
 
 Project requires `docker` and `docker-compose`
@@ -95,20 +111,39 @@ Builds use the public LeilFS APT repository and do not require credentials.
 See the section above for multi-Ubuntu build and tagging instructions.
 
 ### Build and Run with Docker
+
 > **Note:**  
 > On some systems buildx docker plugin may need to be install prior following step. eg. ubuntu require
 > ```shell
 > sudo apt install -y docker-buildx
 > ```
 
+**Latest LeilFS version (default):**
+
 ```shell
-# Build the shared base image (no credentials required)
+# Build the shared base image
 docker build \
   -f leil-base/Dockerfile \
   -t leil-base:ubuntu-24.04 --build-arg BASE_IMAGE=ubuntu:24.04 leil-base/
 
 # Build and start all services
 TAG_SUFFIX=ubuntu-24.04 BASE_IMAGE=leil-base:ubuntu-24.04 docker compose up --build
+```
+
+**Pinned LeilFS version** (e.g. `5.7.1`):
+
+```shell
+# Build the shared base image with a pinned version
+docker build \
+  --build-arg SAUNAFS_VERSION=5.7.1 \
+  -f leilfs-base/Dockerfile \
+  -t leilfs-base leilfs-base/
+
+# Build all services with the same pinned version
+docker compose build \
+  --build-arg SAUNAFS_VERSION=5.7.1
+
+docker compose up
 ```
 
 ### Build and Run with Podman
