@@ -1,7 +1,29 @@
-# leilfs-container
-Experimental container-based deployment cluster for [LeilFS](https://github.com/leil-io/saunafs)
+# leil-container
+Experimental container-based deployment cluster for [LeilFS](https://github.com/leil-io/leilfs)
 
-The ultimate goal of this repository is to create all advantages of containers into LeilFS project.
+The ultimate goal of this repository is to bring all the advantages of containers into LeilFS project.
+
+## Official Docker Images
+
+LeilFS container images are published on Docker Hub under the [leilfs](https://hub.docker.com/u/leilfs) namespace.
+
+**To pull the images:**
+
+```
+docker pull leilfs/leil-master:<version>-ubuntu-<distro>
+docker pull leilfs/leil-metalogger:<version>-ubuntu-<distro>
+docker pull leilfs/leil-cgiserver:<version>-ubuntu-<distro>
+docker pull leilfs/leil-chunkserver:<version>-ubuntu-<distro>
+docker pull leilfs/leil-client:<version>-ubuntu-<distro>
+```
+
+Replace `<version>` (e.g. `5.9.0-1`) and `<distro>` (e.g. `24.04` or `22.04`) as needed.
+
+Example:
+
+```
+docker pull leilfs/leil-master:5.9.0-1-ubuntu-24.04
+```
 
 ## Warning - about testing and educational usage only
 
@@ -31,18 +53,62 @@ Project requires `docker` and `docker-compose`
 
 Also some (`1GB`) free space on hdd is recommended for efficient simulation of storage replication.
 
+## Multi-Ubuntu Build & Tagging
+
+This project supports building and running for both Ubuntu 22.04 and 24.04. All images are tagged with both the LeilFS version and the Ubuntu version for clarity (e.g. `leil-master:5.8.0-1-ubuntu-24.04`).
+
+### Build base images for both Ubuntu versions
+
+```sh
+# Ubuntu 24.04 (noble)
+docker build -t leil-base:ubuntu-24.04 --build-arg BASE_IMAGE=ubuntu:24.04 ./leil-base
+# Ubuntu 22.04 (jammy)
+docker build -t leil-base:ubuntu-22.04 --build-arg BASE_IMAGE=ubuntu:22.04 ./leil-base
+```
+
+### Build and run the full stack for a specific Ubuntu version
+
+```sh
+# For Ubuntu 24.04, latest LeilFS version (default)
+TAG_SUFFIX=ubuntu-24.04 BASE_IMAGE=leil-base:ubuntu-24.04 docker compose up --build
+
+# For Ubuntu 24.04, pin all components to LeilFS version 5.8.0-1
+LEILFS_VERSION=5.8.0-1 TAG_SUFFIX=ubuntu-24.04 BASE_IMAGE=leil-base:ubuntu-24.04 docker compose up --build
+
+# For Ubuntu 22.04, latest LeilFS version (default)
+TAG_SUFFIX=ubuntu-22.04 BASE_IMAGE=leil-base:ubuntu-22.04 docker compose up --build
+
+# For Ubuntu 22.04, pin all components to LeilFS version 5.8.0-1
+LEILFS_VERSION=5.8.0-1 TAG_SUFFIX=ubuntu-22.04 BASE_IMAGE=leil-base:ubuntu-22.04 docker compose up --build
+```
+
+All images will be tagged as e.g. `leil-master:5.8.0-1-ubuntu-24.04`, `leil-client:latest-ubuntu-22.04`, etc.
+
+To stop and clean up:
+```sh
+docker compose down
+```
+
+
+To see all built images:
+```sh
+docker images | grep leil
+```
+
+---
+
 ## Usage
 
 Clone the repository:
 
 ```shell
-git clone https://github.com/leil-io/leilfs-container.git
-cd leilfs-container
+git clone https://github.com/leil-io/leil-container.git
+cd leil-container
 ```
 
 Builds use the public LeilFS APT repository and do not require credentials.
 
----
+See the section above for multi-Ubuntu build and tagging instructions.
 
 ### Build and Run with Docker
 
@@ -57,11 +123,11 @@ Builds use the public LeilFS APT repository and do not require credentials.
 ```shell
 # Build the shared base image
 docker build \
-  -f leilfs-base/Dockerfile \
-  -t leilfs-base leilfs-base/
+  -f leil-base/Dockerfile \
+  -t leil-base:ubuntu-24.04 --build-arg BASE_IMAGE=ubuntu:24.04 leil-base/
 
 # Build and start all services
-docker compose up --build
+TAG_SUFFIX=ubuntu-24.04 BASE_IMAGE=leil-base:ubuntu-24.04 docker compose up --build
 ```
 
 **Pinned LeilFS version** (e.g. `5.7.1`):
@@ -87,19 +153,12 @@ If you previously created a `./volumes` folder while using Docker, please delete
 ```shell
 # Build the shared base image (no credentials required)
 podman build \
-  -f leilfs-base/Dockerfile \
-  -t leilfs-base leilfs-base/
+  -f leil-base/Dockerfile \
+  -t leil-base:ubuntu-24.04 --build-arg BASE_IMAGE=ubuntu:24.04 leil-base/
 
 # Build and start all services
-podman-compose up --build
+TAG_SUFFIX=ubuntu-24.04 BASE_IMAGE=leil-base:ubuntu-24.04 podman-compose up --build
 ```
-
-Pass `--build-arg SAUNAFS_VERSION=5.7.1` to both commands to pin a specific version.
-
-> **Note:**  
-> `docker compose` (v2) or `podman-compose` is recommended.
-
----
 
 Visit [http://localhost:29425/sfs.cgi?masterhost=master&masterport=9421](http://localhost:29425/sfs.cgi?masterhost=master&masterport=9421) to access the LeilFS CGI.
 
@@ -108,7 +167,7 @@ Visit [http://localhost:29425/sfs.cgi?masterhost=master&masterport=9421](http://
 This Docker deployment is designed for ease of use and demonstration.
 - **No Pre-committed Data**: The `volumes/` directory is no longer part of this repository.
 - **Automatic Initialization**: On first startup, each service (master, metalogger, chunkservers) will automatically:
-    - Create necessary configuration files using defaults from the LeilFS packages (found in `/usr/share/doc/leilfs-*/examples/` within the containers).
+    - Create necessary configuration files using defaults from the LeilFS packages (found in `/usr/share/doc/saunafs-*/examples/` within the containers).
     - Initialize their respective data directories.
 - **Persistent Data**: If you map Docker volumes to the standard LeilFS data and configuration paths (e.g., `/var/lib/saunafs/`, `/etc/saunafs/`), your data and custom configurations will persist across container restarts. If these mapped volumes are empty on first start, they will be initialized as described above.
 - **Chunkserver Storage**:
